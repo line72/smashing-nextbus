@@ -4,15 +4,23 @@ require 'open-uri'
 require 'nokogiri'
 
 BASE_URL="http://webservices.nextbus.com/service/publicXMLFeed"
-AGENCY_ID="lametro"
-STOP_IDS = ["8033", "805"]
+
+# LA Metro
+AGENCY_ID="lametro-rail"
+STOP_IDS = ["80122"]
+
+# # LA Bus
+# AGENCY_ID="lametro"
+# STOP_IDS = ["8033", "805"]
+
 UPDATE_INTERVAL = '30s'
 
 class Nextbus
 
   class Stop
-    def initialize(id, name, latitude, longitude)
+    def initialize(id, tag, name, latitude, longitude)
       @id = id
+      @tag = tag
       @name = name
       @latitude = latitude
       @longitude = longitude
@@ -20,6 +28,9 @@ class Nextbus
 
     def id
       return @id
+    end
+    def tag
+      return @tag
     end
     def name
       return @name
@@ -33,14 +44,14 @@ class Nextbus
   end
 
   class Route
-    def initialize(id, color, path)
-      @id = id
+    def initialize(tag, color, path)
+      @id = tag
       @color = color
       @path = path
     end
 
-    def id
-      return @id
+    def tag
+      return @tag
     end
     def color
       return @color
@@ -51,17 +62,21 @@ class Nextbus
   end
   
   class Prediction
-    def initialize(route_id, stop_id, time, vehicle_id)
-      @route_id = route_id
+    def initialize(route_tag, stop_id, stop_tag, time, vehicle_id)
+      @route_tag = route_tag
       @stop_id = stop_id
+      @stop_tag = stop_tag
       @time = time
       @vehicle_id = vehicle_id
 
-      def route_id
-        return @route_id
+      def route_tag
+        return @route_tag
       end
       def stop_id
         return @stop_id
+      end
+      def stop_tag
+        return @stop_tag
       end
       def time
         return @time
@@ -73,9 +88,9 @@ class Nextbus
   end
 
   class Vehicle
-    def initialize(id, route_id, latitude, longitude, heading, speed)
+    def initialize(id, route_tag, latitude, longitude, heading, speed)
       @id = id
-      @route_id = route_id
+      @route_tag = route_tag
       @latitude = latitude
       @longitude = longitude
       @heading = heading
@@ -85,8 +100,8 @@ class Nextbus
     def id
       return @id
     end
-    def route_id
-      return @route_id
+    def route_tag
+      return @route_tag
     end
     def latitude
       return @latitude
@@ -130,7 +145,7 @@ class Nextbus
 
         r.xpath("//predictions").each do |pr|
           #puts "predictions=#{pr.children}"
-          route_id = pr['routeTag']
+          route_tag = pr['routeTag']
 
           # We want to get any stop and route information, but we can't
           #  get stop information globally, just based on its ID. Instead,
@@ -138,12 +153,12 @@ class Nextbus
           #  the route information, which is a heavy operation.
           # So, we will gather all the routes that any of our stops can be
           #  a part of, get their information and fill in the stops according.
-          found_routes[route_id] = true
+          found_routes[route_tag] = true
           
           # get all the predictions under this route
           pr.xpath("//direction/prediction").each do |pr2|
             #puts("pr2=#{pr2}")
-            predictions << Prediction.new(route_id, stop_id.to_s,
+            predictions << Prediction.new(route_tag, stop_id.to_s, pr['stopTag'],
                                           pr2['minutes'], pr2['vehicle'])
           end
         end
@@ -152,12 +167,12 @@ class Nextbus
       # go through all the routes that we found and get their information
       #  Store it, and also, store the stop information for any stops we
       #  care about along that route
-      found_routes.each_key do |route_id|
+      found_routes.each_key do |route_tag|
         #puts "looking up #{route_id}"
         # if we already have this cached, pass over
-        unless @routes.has_key?(route_id)
-          puts "fetching info for route #{route_id}"
-          uri = URI.open(BASE_URL + "?command=routeConfig&a=#{AGENCY_ID}&r=#{route_id}")
+        unless @routes.has_key?(route_tag)
+          puts "fetching info for route #{route_tag}"
+          uri = URI.open(BASE_URL + "?command=routeConfig&a=#{AGENCY_ID}&r=#{route_tag}")
           r = Nokogiri::XML(uri)
 
           route = r.xpath("//route").first()
@@ -165,15 +180,17 @@ class Nextbus
             # get the path of this route
             path = Array.new
             
-            @routes[route_id] = Route.new(route_id, route['color'], path)
+            @routes[route_tag] = Route.new(route_tag, route['color'], path)
 
             # iterate through all the stops and fill in any missing ones
             route.xpath("stop").each do |s|
-              s_id = s['tag']
+              s_id = s['stopId']
+              s_tag = s['tag']
               #puts "checking stop #{s_id} #{STOP_IDS.include?(s_id)} #{@stops.has_key?(s_id)}"
               if STOP_IDS.include?(s_id) and not @stops.has_key?(s_id)
                 #puts "making new stop #{s_id}"
                 @stops[s_id] = Stop.new(s_id,
+                                        s_tag,
                                         s['title'],
                                         s['lat'].to_f,
                                         s['lon'].to_f)
@@ -188,16 +205,16 @@ class Nextbus
       
       # For each route
       #  1. Get the locations of the vehicles and cache it
-      @routes.each do |route_id, route|
-        puts "fetching vehicle locations for #{route_id}"
-        uri = URI.open(BASE_URL + "?command=vehicleLocations&a=#{AGENCY_ID}&r=#{route_id}&t=0")
+      @routes.each do |route_tag, route|
+        puts "fetching vehicle locations for #{route_tag}"
+        uri = URI.open(BASE_URL + "?command=vehicleLocations&a=#{AGENCY_ID}&r=#{route_tag}&t=0")
         r = Nokogiri::XML(uri)
         #puts(r)
 
         r.xpath("//vehicle").each do |v|
           v_id = v['id']
           
-          vehicles[v_id] = Vehicle.new(v_id, route_id,
+          vehicles[v_id] = Vehicle.new(v_id, route_tag,
                                        v['lat'], v['lon'],
                                        v['heading'], v['speedKmHr'])
         end
@@ -218,8 +235,8 @@ class Nextbus
             "latitude" => @stops[prediction.stop_id].latitude,
             "longitude" => @stops[prediction.stop_id].longitude
           },
-          "color" => @routes[prediction.route_id].color,
-          "path" => @routes[prediction.route_id].path,
+          "color" => @routes[prediction.route_tag].color,
+          "path" => @routes[prediction.route_tag].path,
           "kmlUrl" => "https://example.com/blah.kml",
           "vehicle" => nil
         }
@@ -229,7 +246,7 @@ class Nextbus
             arrival["vehicle"] = {
               "latitude" => vehicle.latitude,
               "longitude" => vehicle.longitude,
-              "iconUrl" => build_icon_url(@routes[prediction.route_id].color, vehicle.heading)
+              "iconUrl" => build_icon_url(@routes[prediction.route_tag].color, vehicle.heading)
             }
           end
         end
@@ -238,12 +255,12 @@ class Nextbus
         unless arrivals.has_key?(prediction.stop_id)
           arrivals[prediction.stop_id] = Hash.new
         end
-        unless arrivals[prediction.stop_id].has_key?(prediction.route_id)
-          arrivals[prediction.stop_id][prediction.route_id] = Array.new
+        unless arrivals[prediction.stop_id].has_key?(prediction.route_tag)
+          arrivals[prediction.stop_id][prediction.route_tag] = Array.new
         end
 
         # append the arrival
-        arrivals[prediction.stop_id][prediction.route_id] << arrival
+        arrivals[prediction.stop_id][prediction.route_tag] << arrival
       end
 
       #puts("arrivals #{arrivals}")
@@ -298,6 +315,7 @@ end
 
 @Arriver = Nextbus.new({stop_ids: STOP_IDS})
 #puts @Arriver.update
+
 # :first_in sets how long it takes before the job is first run. In this case, it is run immediately
 SCHEDULER.every UPDATE_INTERVAL, :first_in => 0 do |job|
   arrivals = @Arriver.update
