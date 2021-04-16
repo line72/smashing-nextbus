@@ -23,7 +23,7 @@ After installing, you first need to configure your stop locations and agency. Ed
 
 ```
 AGENCY_ID="lametro"
-STOP_IDS = [2492, 1464, 1430]
+STOP_IDS = ['2492', '1464', '1430']
 ```
 
 You then need to add the widget to your dashboard. There are a few important things to know:
