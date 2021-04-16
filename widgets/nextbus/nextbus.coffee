@@ -1,4 +1,4 @@
-class Dashing.Availtec extends Dashing.Widget
+class Dashing.Nextbus extends Dashing.Widget
         
         ready: ->
                 # This is fired when the widget is done being rendered
