@@ -178,9 +178,14 @@ class Nextbus
           route = r.xpath("//route").first()
           if route
             # get the path of this route
-            path = Array.new
+            #  it is a multi-dimensional array
+            route_path = route.xpath("path").map do |path|
+              path.xpath("point").map do |point|
+                [point['lat'].to_f, point['lon'].to_f]
+              end
+            end
             
-            @routes[route_tag] = Route.new(route_tag, route['color'], path)
+            @routes[route_tag] = Route.new(route_tag, route['color'], route_path)
 
             # iterate through all the stops and fill in any missing ones
             route.xpath("stop").each do |s|
@@ -237,7 +242,6 @@ class Nextbus
           },
           "color" => @routes[prediction.route_tag].color,
           "path" => @routes[prediction.route_tag].path,
-          "kmlUrl" => "https://example.com/blah.kml",
           "vehicle" => nil
         }
         if vehicles.has_key?(prediction.vehicle_id)

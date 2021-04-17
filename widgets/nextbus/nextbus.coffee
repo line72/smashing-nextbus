@@ -35,7 +35,6 @@ class Dashing.Nextbus extends Dashing.Widget
                         popupAnchor: [0, -50]
                 })
 
-                @routeUrl = null
                 @routePath = null
                 
                 @stopMarker = null
@@ -49,20 +48,8 @@ class Dashing.Nextbus extends Dashing.Widget
                 if !@map or Object.keys(data).length == 0
                         return
 
-                if !@routeUrl
-                        @routeUrl = data.kmlUrl
-                        me = this
-                        
-                        fetch (data.kmlUrl)
-                        .then (res) ->
-                                res.text()
-                        .then (kml) ->
-                                parser = new DOMParser()
-                                kml = parser.parseFromString(kml, "text/xml")
-
-                                me.routePath = new L.KML(kml)
-                                me.routePath.setStyle({color: data.color})
-                                me.map.addLayer(me.routePath)
+                if !@routePath
+                        @routePath = L.polyline(data.path, {color: '#' + data.color, weight: 8}).addTo(@map)
 
                 if !@stopMarker
                         @stopMarker = L.marker([data.latitude, data.longitude], {icon: @stopIcon}).addTo(@map)
@@ -93,17 +80,12 @@ class Dashing.Nextbus extends Dashing.Widget
                         
 
         select: (data) ->
-                console.log('select', data)
                 updatedData = {}
 
                 stop_id = @get('stop_id')
                 route_id = @get('route_id')
-                console.log('stop_id', stop_id)
-                console.log('route_id', route_id)
                 if stop_id of data
-                        console.log('found stop in data')
                         if route_id of data[stop_id]
-                                console.log('found route')
                                 edt = data[stop_id][route_id][0]["edt"]
                                 sdt = data[stop_id][route_id][0]["sdt"]
                                 nextEdt = '?'
@@ -118,7 +100,7 @@ class Dashing.Nextbus extends Dashing.Widget
 
                                 latitude = data[stop_id][route_id][0]["stop"].latitude
                                 longitude = data[stop_id][route_id][0]["stop"].longitude
-                                kml_url = data[stop_id][route_id][0]["kmlUrl"]
+                                path = data[stop_id][route_id][0]["path"]
                                 color = data[stop_id][route_id][0]["color"]
 
                                 updatedData = {
@@ -128,11 +110,10 @@ class Dashing.Nextbus extends Dashing.Widget
                                         latitude: latitude,
                                         longitude: longitude,
                                         color: color,
-                                        kmlUrl: kml_url,
+                                        path: path,
                                         vehicle: vehicle
                                 }
 
-                console.log('updatedData', updatedData)
                 updatedData
                 
 
