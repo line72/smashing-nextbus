@@ -49,7 +49,6 @@ class Dashing.Nextbus extends Dashing.Widget
                         return
 
                 if !@routePath
-                        console.log('creating routePath', data.path)
                         @routePath = L.polyline(data.path, {color: '#' + data.color, weight: 8}).addTo(@map)
 
                 if !@stopMarker
@@ -81,17 +80,12 @@ class Dashing.Nextbus extends Dashing.Widget
                         
 
         select: (data) ->
-                console.log('select', data)
                 updatedData = {}
 
                 stop_id = @get('stop_id')
                 route_id = @get('route_id')
-                console.log('stop_id', stop_id)
-                console.log('route_id', route_id)
                 if stop_id of data
-                        console.log('found stop in data')
                         if route_id of data[stop_id]
-                                console.log('found route')
                                 edt = data[stop_id][route_id][0]["edt"]
                                 sdt = data[stop_id][route_id][0]["sdt"]
                                 nextEdt = '?'
@@ -120,7 +114,6 @@ class Dashing.Nextbus extends Dashing.Widget
                                         vehicle: vehicle
                                 }
 
-                console.log('updatedData', updatedData)
                 updatedData
                 
 
