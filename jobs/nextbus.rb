@@ -156,10 +156,10 @@ class Nextbus
           found_routes[route_tag] = true
           
           # get all the predictions under this route
-          pr.xpath("//direction/prediction").each do |pr2|
+          pr.xpath("direction/prediction").each do |pr2|
             #puts("pr2=#{pr2}")
             predictions << Prediction.new(route_tag, stop_id.to_s, pr['stopTag'],
-                                          pr2['minutes'], pr2['vehicle'])
+                                          pr2['minutes'].to_i, pr2['vehicle'])
           end
         end
       end
@@ -220,8 +220,8 @@ class Nextbus
           v_id = v['id']
           
           vehicles[v_id] = Vehicle.new(v_id, route_tag,
-                                       v['lat'], v['lon'],
-                                       v['heading'], v['speedKmHr'])
+                                       v['lat'].to_f, v['lon'].to_f,
+                                       v['heading'].to_i, v['speedKmHr'].to_f)
         end
       end
 
@@ -242,6 +242,7 @@ class Nextbus
           },
           "color" => @routes[prediction.route_tag].color,
           "path" => @routes[prediction.route_tag].path,
+          "vehicle_id" => prediction.vehicle_id,
           "vehicle" => nil
         }
         if vehicles.has_key?(prediction.vehicle_id)
@@ -265,6 +266,10 @@ class Nextbus
 
         # append the arrival
         arrivals[prediction.stop_id][prediction.route_tag] << arrival
+        # sort by edit ascending (in-place)
+        arrivals[prediction.stop_id][prediction.route_tag].sort! { |a,b| a['edt'] <=> b['edt'] }
+        # remove duplicates
+        arrivals[prediction.stop_id][prediction.route_tag].uniq! { |i| [i['edt'], i['vehicle_id']] }
       end
 
       #puts("arrivals #{arrivals}")
