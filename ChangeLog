@@ -1,3 +1,6 @@
+2021-04-27  Marcus Dillavou  <line72@line72.net>
+	* ISS-5 - Ignore invalid lat/lon
+
 2021-04-18  Marcus Dillavou  <line72@line72.net>
 	* ISS-1 - Sort Predictions
 

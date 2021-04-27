@@ -103,16 +103,20 @@ class Dashing.Nextbus extends Dashing.Widget
                                 path = data[stop_id][route_id][0]["path"]
                                 color = data[stop_id][route_id][0]["color"]
 
-                                updatedData = {
-                                        edt: edt,
-                                        sdt: sdt,
-                                        nextEdt: nextEdt,
-                                        latitude: latitude,
-                                        longitude: longitude,
-                                        color: color,
-                                        path: path,
-                                        vehicle: vehicle
-                                }
+                                if Math.abs(latitude) < 0.01 or Math.abs(longitude) < 0.01
+                                        # invalid latitude/longitude
+                                        updatedData = {}
+                                else
+                                        updatedData = {
+                                                edt: edt,
+                                                sdt: sdt,
+                                                nextEdt: nextEdt,
+                                                latitude: latitude,
+                                                longitude: longitude,
+                                                color: color,
+                                                path: path,
+                                                vehicle: vehicle
+                                        }
 
                 updatedData
                 
