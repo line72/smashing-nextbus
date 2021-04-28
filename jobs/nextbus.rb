@@ -257,19 +257,19 @@ class Nextbus
         end
 
         # make sure our keys exists
-        unless arrivals.has_key?(prediction.stop_id)
-          arrivals[prediction.stop_id] = Hash.new
+        unless arrivals.has_key?(prediction.stop_tag)
+          arrivals[prediction.stop_tag] = Hash.new
         end
-        unless arrivals[prediction.stop_id].has_key?(prediction.route_tag)
-          arrivals[prediction.stop_id][prediction.route_tag] = Array.new
+        unless arrivals[prediction.stop_tag].has_key?(prediction.route_tag)
+          arrivals[prediction.stop_tag][prediction.route_tag] = Array.new
         end
 
         # append the arrival
-        arrivals[prediction.stop_id][prediction.route_tag] << arrival
+        arrivals[prediction.stop_tag][prediction.route_tag] << arrival
         # sort by edit ascending (in-place)
-        arrivals[prediction.stop_id][prediction.route_tag].sort! { |a,b| a['edt'] <=> b['edt'] }
+        arrivals[prediction.stop_tag][prediction.route_tag].sort! { |a,b| a['edt'] <=> b['edt'] }
         # remove duplicates
-        arrivals[prediction.stop_id][prediction.route_tag].uniq! { |i| [i['edt'], i['vehicle_id']] }
+        arrivals[prediction.stop_tag][prediction.route_tag].uniq! { |i| [i['edt'], i['vehicle_id']] }
       end
 
       #puts("arrivals #{arrivals}")

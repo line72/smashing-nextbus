@@ -82,26 +82,26 @@ class Dashing.Nextbus extends Dashing.Widget
         select: (data) ->
                 updatedData = {}
 
-                stop_id = @get('stop_id')
+                stop_tag = @get('stop_tag')
                 route_id = @get('route_id')
-                if stop_id of data
-                        if route_id of data[stop_id]
-                                edt = data[stop_id][route_id][0]["edt"]
-                                sdt = data[stop_id][route_id][0]["sdt"]
+                if stop_tag of data
+                        if route_id of data[stop_tag]
+                                edt = data[stop_tag][route_id][0]["edt"]
+                                sdt = data[stop_tag][route_id][0]["sdt"]
                                 nextEdt = '?'
-                                vehicle = data[stop_id][route_id][0]["vehicle"]
+                                vehicle = data[stop_tag][route_id][0]["vehicle"]
 
-                                if data[stop_id][route_id].length > 1
-                                        nextEdt = data[stop_id][route_id][1]["edt"]
+                                if data[stop_tag][route_id].length > 1
+                                        nextEdt = data[stop_tag][route_id][1]["edt"]
                                         
                                 @set 'edt', edt
                                 @set 'sdt', sdt
                                 @set 'nextEdt', nextEdt
 
-                                latitude = data[stop_id][route_id][0]["stop"].latitude
-                                longitude = data[stop_id][route_id][0]["stop"].longitude
-                                path = data[stop_id][route_id][0]["path"]
-                                color = data[stop_id][route_id][0]["color"]
+                                latitude = data[stop_tag][route_id][0]["stop"].latitude
+                                longitude = data[stop_tag][route_id][0]["stop"].longitude
+                                path = data[stop_tag][route_id][0]["path"]
+                                color = data[stop_tag][route_id][0]["color"]
 
                                 if Math.abs(latitude) < 0.01 or Math.abs(longitude) < 0.01
                                         # invalid latitude/longitude
