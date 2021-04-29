@@ -119,6 +119,7 @@ class Nextbus
   
   def initialize(options)
     @stop_ids = options[:stop_ids]
+    @agency_id = options[:agency_id]
 
     @routes = Hash.new
     @stops = Hash.new
@@ -140,7 +141,7 @@ class Nextbus
         puts "fetching predictions for stop: #{stop_id}"
 
         # Get the upcoming predictions for this stop
-        uri = URI.open(BASE_URL + "?command=predictions&a=#{AGENCY_ID}&stopId=#{stop_id}")
+        uri = URI.open(BASE_URL + "?command=predictions&a=#{@agency_id}&stopId=#{stop_id}")
         r = Nokogiri::XML(uri)
 
         r.xpath("//predictions").each do |pr|
@@ -172,7 +173,7 @@ class Nextbus
         # if we already have this cached, pass over
         unless @routes.has_key?(route_tag)
           puts "fetching info for route #{route_tag}"
-          uri = URI.open(BASE_URL + "?command=routeConfig&a=#{AGENCY_ID}&r=#{route_tag}")
+          uri = URI.open(BASE_URL + "?command=routeConfig&a=#{@agency_id}&r=#{route_tag}")
           r = Nokogiri::XML(uri)
 
           route = r.xpath("//route").first()
@@ -192,7 +193,7 @@ class Nextbus
               s_id = s['stopId']
               s_tag = s['tag']
               #puts "checking stop #{s_id} #{STOP_IDS.include?(s_id)} #{@stops.has_key?(s_id)}"
-              if STOP_IDS.include?(s_id) and not @stops.has_key?(s_id)
+              if @stop_ids.include?(s_id) and not @stops.has_key?(s_id)
                 #puts "making new stop #{s_id}"
                 @stops[s_id] = Stop.new(s_id,
                                         s_tag,
@@ -212,7 +213,7 @@ class Nextbus
       #  1. Get the locations of the vehicles and cache it
       @routes.each do |route_tag, route|
         puts "fetching vehicle locations for #{route_tag}"
-        uri = URI.open(BASE_URL + "?command=vehicleLocations&a=#{AGENCY_ID}&r=#{route_tag}&t=0")
+        uri = URI.open(BASE_URL + "?command=vehicleLocations&a=#{@agency_id}&r=#{route_tag}&t=0")
         r = Nokogiri::XML(uri)
         #puts(r)
 
@@ -274,7 +275,6 @@ class Nextbus
 
       #puts("arrivals #{arrivals}")
     rescue StandardError => e
-      puts response.body
       puts e.inspect
       puts "\e[33mUnable to retrieve nextbus data\e[0m"
     end
@@ -322,11 +322,14 @@ class Nextbus
   
 end
 
-@Arriver = Nextbus.new({stop_ids: STOP_IDS})
-#puts @Arriver.update
+# Mutliple Nextbus Arrivers can be created with different agency_ids and stop_ids
+# You just need to merge the update results into a hash keyed by agency id
+@Arriver = Nextbus.new({agency_id: AGENCY_ID, stop_ids: STOP_IDS})
 
 # :first_in sets how long it takes before the job is first run. In this case, it is run immediately
 SCHEDULER.every UPDATE_INTERVAL, :first_in => 0 do |job|
-  arrivals = @Arriver.update
+  arrivals = Hash.new
+  arrivals[AGENCY_ID] = @Arriver.update
+
   send_event('nextbus', arrivals)
 end
