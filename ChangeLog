@@ -1,3 +1,6 @@
+2021-04-29  Marcus Dillavou  <line72@line72.net>
+	* ISS-10 - Allow passing in the agency id
+
 2021-04-27  Marcus Dillavou  <line72@line72.net>
 	* ISS-7 - Filter widget based on stop tag
 	* ISS-5 - Ignore invalid lat/lon

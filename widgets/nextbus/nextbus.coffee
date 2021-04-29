@@ -79,44 +79,50 @@ class Dashing.Nextbus extends Dashing.Widget
                                 @marker = null
                         
 
-        select: (data) ->
+        select: (all_data) ->
                 updatedData = {}
 
+                agency_id = @get('agency_id')
                 stop_tag = @get('stop_tag')
                 route_id = @get('route_id')
-                if stop_tag of data
-                        if route_id of data[stop_tag]
-                                edt = data[stop_tag][route_id][0]["edt"]
-                                sdt = data[stop_tag][route_id][0]["sdt"]
-                                nextEdt = '?'
-                                vehicle = data[stop_tag][route_id][0]["vehicle"]
 
-                                if data[stop_tag][route_id].length > 1
-                                        nextEdt = data[stop_tag][route_id][1]["edt"]
-                                        
-                                @set 'edt', edt
-                                @set 'sdt', sdt
-                                @set 'nextEdt', nextEdt
-
-                                latitude = data[stop_tag][route_id][0]["stop"].latitude
-                                longitude = data[stop_tag][route_id][0]["stop"].longitude
-                                path = data[stop_tag][route_id][0]["path"]
-                                color = data[stop_tag][route_id][0]["color"]
-
-                                if Math.abs(latitude) < 0.01 or Math.abs(longitude) < 0.01
-                                        # invalid latitude/longitude
-                                        updatedData = {}
-                                else
-                                        updatedData = {
-                                                edt: edt,
-                                                sdt: sdt,
-                                                nextEdt: nextEdt,
-                                                latitude: latitude,
-                                                longitude: longitude,
-                                                color: color,
-                                                path: path,
-                                                vehicle: vehicle
-                                        }
+                if agency_id of all_data
+                        # only look at data for the current agency
+                        data = all_data[agency_id]
+                        
+                        if stop_tag of data
+                                if route_id of data[stop_tag]
+                                        edt = data[stop_tag][route_id][0]["edt"]
+                                        sdt = data[stop_tag][route_id][0]["sdt"]
+                                        nextEdt = '?'
+                                        vehicle = data[stop_tag][route_id][0]["vehicle"]
+        
+                                        if data[stop_tag][route_id].length > 1
+                                                nextEdt = data[stop_tag][route_id][1]["edt"]
+                                                
+                                        @set 'edt', edt
+                                        @set 'sdt', sdt
+                                        @set 'nextEdt', nextEdt
+        
+                                        latitude = data[stop_tag][route_id][0]["stop"].latitude
+                                        longitude = data[stop_tag][route_id][0]["stop"].longitude
+                                        path = data[stop_tag][route_id][0]["path"]
+                                        color = data[stop_tag][route_id][0]["color"]
+        
+                                        if Math.abs(latitude) < 0.01 or Math.abs(longitude) < 0.01
+                                                # invalid latitude/longitude
+                                                updatedData = {}
+                                        else
+                                                updatedData = {
+                                                        edt: edt,
+                                                        sdt: sdt,
+                                                        nextEdt: nextEdt,
+                                                        latitude: latitude,
+                                                        longitude: longitude,
+                                                        color: color,
+                                                        path: path,
+                                                        vehicle: vehicle
+                                                }
 
                 updatedData
                 
