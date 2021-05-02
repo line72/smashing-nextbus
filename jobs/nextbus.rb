@@ -252,7 +252,8 @@ class Nextbus
             arrival["vehicle"] = {
               "latitude" => vehicle.latitude,
               "longitude" => vehicle.longitude,
-              "iconUrl" => build_icon_url(@routes[prediction.route_tag].color, vehicle.heading)
+              "color" => @routes[prediction.route_tag].color,
+              "bearing" => vehicle.heading
             }
           end
         end
@@ -280,11 +281,6 @@ class Nextbus
     end
 
     arrivals
-  end
-
-  def build_icon_url(color, heading)
-    #AGENCY_URL + "/IconFactory.ashx?library=busIcons%5Cmobile&colortype=hex&color=" + color + "&bearing=" + heading.to_s
-    "https://realtimebjcta.availtec.com/InfoPoint" + "/IconFactory.ashx?library=busIcons%5Cmobile&colortype=hex&color=" + color + "&bearing=" + heading.to_s
   end
   
   def parse_json_datetime(datetime)

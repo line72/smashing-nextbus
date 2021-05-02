@@ -27,13 +27,15 @@ class Dashing.Nextbus extends Dashing.Widget
                         shadowAnchor: [15, 41]
                 })
 
-                @iconUrl = "https://realtimebjcta.availtec.com/InfoPoint/IconFactory.ashx?library=busIcons%5Cmobile&colortype=hex&color=12AB89&bearing=154"
-                @icon = L.icon({
-                        iconUrl: @iconUrl,
-                        iconSize: [39, 50],
-                        iconAnchor: [20, 50],
-                        popupAnchor: [0, -50]
-                })
+                @iconColor = 'ff0000'
+                @iconBearing = 0
+                @icon = L.icon(iconUrl: '/')
+                fetch('/bus-icon.svg')
+                .then (response) ->
+                        response.text()
+                .then (response) =>
+                        @iconSvg = response
+                        @icon = @buildIcon('ff0000', 0)
 
                 @routePath = null
                 
@@ -56,14 +58,8 @@ class Dashing.Nextbus extends Dashing.Widget
 
                         
                 if 'vehicle' of data and data.vehicle
-                        if @iconUrl != data.vehicle.iconUrl
-                                @iconUrl = data.vehicle.iconUrl
-                                @icon = L.icon({
-                                        iconUrl: @iconUrl
-                                        iconSize: [39, 50],
-                                        iconAnchor: [20, 50],
-                                        popupAnchor: [0, -50]
-                                })
+                        if @iconSvg and (@iconColor != data.vehicle.color or @iconBearing != data.vehicle.bearing)
+                                @icon = @buildIcon(data.vehicle.color, data.vehicle.bearing)
                         
                         if !@marker
                                 @marker = L.marker([data.vehicle.latitude, data.vehicle.longitude], {icon: @icon}).addTo(@map)
@@ -126,6 +122,54 @@ class Dashing.Nextbus extends Dashing.Widget
 
                 updatedData
                 
+        buildIcon: (color, heading) ->
+                @iconColor = color
+                @iconBearing = heading
+                
+                # load the svg
+                xml = new DOMParser().parseFromString(@iconSvg, 'image/svg+xml')
+                # update the attributes #
+
+                # 1. the gradient
+                # stop1
+                stop1 = xml.querySelector('#stop958')
+                stop1.style.stopColor = '#' + color
+                # stop2
+                stop2 = xml.querySelector('#stop960')
+                stop2.style.stopColor = '#' + color
+                stop2.style.stopOpacity = 0.6
+
+                # 2. the marker
+                marker = xml.querySelector('#marker')
+                marker.style.stroke = '#' + color
+
+                # 3. the bus
+                bus = xml.querySelector('#bus')
+                bus.style.fill = '#' + color
+
+                # 4. the arrow + polygon
+                arrow = xml.querySelector('#right_arrow')
+                arrow.style.fill = '#' + color
+                polygon1160 = xml.querySelector('#polygon1160')
+                polygon1160.style.fill = '#' + color
+
+                # 5. The bearing, set its rotation
+                bearing = xml.querySelector('#bearing')
+                bearing.setAttribute('transform', 'rotate(' + heading + ', 250, 190)')
+
+                serialized = new XMLSerializer().serializeToString(xml)
+                url = 'data:image/svg+xml;base64,' + btoa(serialized)
+
+                # return a leaflet icon
+                icon = L.icon({
+                    iconUrl: url,
+                    iconSize: [60, 60],
+                    iconAnchor: [30, 60],
+                    popupAnchor: [0, -60]
+                })
+
+                icon
+
 
         @accessor 'edt', Dashing.AnimatedValue
         @accessor 'sdt', Dashing.AnimatedValue
