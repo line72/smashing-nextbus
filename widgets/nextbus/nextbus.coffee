@@ -29,7 +29,7 @@ class Dashing.Nextbus extends Dashing.Widget
 
                 @iconColor = 'ff0000'
                 @iconBearing = 0
-                @icon = null
+                @icon = L.icon(iconUrl: '/')
                 fetch('/bus-icon.svg')
                 .then (response) ->
                         response.text()
@@ -122,9 +122,9 @@ class Dashing.Nextbus extends Dashing.Widget
 
                 updatedData
                 
-        buildIcon: (color, bearing) ->
+        buildIcon: (color, heading) ->
                 @iconColor = color
-                @iconBearing = bearing
+                @iconBearing = heading
                 
                 # load the svg
                 xml = new DOMParser().parseFromString(@iconSvg, 'image/svg+xml')
@@ -155,7 +155,7 @@ class Dashing.Nextbus extends Dashing.Widget
 
                 # 5. The bearing, set its rotation
                 bearing = xml.querySelector('#bearing')
-                bearing.setAttribute('transform', 'rotate(' + bearing + ', 250, 190)')
+                bearing.setAttribute('transform', 'rotate(' + heading + ', 250, 190)')
 
                 serialized = new XMLSerializer().serializeToString(xml)
                 url = 'data:image/svg+xml;base64,' + btoa(serialized)
